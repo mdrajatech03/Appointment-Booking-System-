@@ -1,87 +1,200 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional Appointment System</title>
-    <link rel="stylesheet" href="style.css">
-    
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<meta charset="UTF-8">
+<title>Startup Booking App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body { background:#020617; color:white; font-family:Arial; text-align:center; }
+button { padding:10px; margin:5px; border:none; border-radius:5px; cursor:pointer; }
+.card { background:#0f172a; padding:15px; margin:10px; border-radius:10px; }
+.admin { background:green; }
+.delete { background:red; }
+</style>
 </head>
+
 <body>
 
-    <header>
-        <div class="logo">ServicePortal</div>
-        <nav>
-            <button class="nav-btn" onclick="showPage('welcome-page')">Home</button>
-            <button class="nav-btn" onclick="showPage('admin-panel')">Admin Login</button>
-        </nav>
-    </header>
+<h2>🚀 Startup Booking Dashboard</h2>
 
-    <section id="welcome-page" class="container page">
-        <h2 class="section-title">Hamari Services</h2>
-        <div id="item-list" class="grid-container">
-            </div>
-    </section>
+<button onclick="login()">Login with Google</button>
+<button onclick="logout()">Logout</button>
 
-    <div id="booking-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <div id="item-info"></div>
-            <hr>
-            <h3>Apni Details Bharein</h3>
-            <form id="appointment-form">
-                <input type="text" id="custName" placeholder="Pura Naam" required>
-                <input type="text" id="custAddress" placeholder="Pura Pata (Address)" required>
-                <input type="tel" id="custMobile" placeholder="Mobile Number" required>
-                <button type="submit" class="btn-confirm">Confirm & Book Appointment</button>
-            </form>
-        </div>
-    </div>
+<div class="card">
+<h3>Book Appointment</h3>
+<input type="date" id="date">
+<input type="time" id="time">
+<button onclick="book()">Book</button>
+</div>
 
-    <div style="display:none;">
-        <div id="booking-slip" style="padding: 30px; border: 2px solid #333; width: 400px; font-family: Arial;">
-            <h2 style="text-align: center; border-bottom: 2px solid #333;">BOOKING CONFIRMATION</h2>
-            <p><strong>Order ID:</strong> <span id="slip-id"></span></p>
-            <p><strong>Name:</strong> <span id="slip-name"></span></p>
-            <p><strong>Mobile:</strong> <span id="slip-mobile"></span></p>
-            <p><strong>Address:</strong> <span id="slip-address"></span></p>
-            <p><strong>Service:</strong> <span id="slip-item"></span></p>
-            <p><strong>Date:</strong> <span id="slip-date"></span></p>
-            <p style="text-align: center; margin-top: 20px;">Thank you for booking with us!</p>
-        </div>
-    </div>
+<div id="adminPanel" style="display:none">
+  <div class="card">
+    <h3>📊 Analytics</h3>
+    <canvas id="chart"></canvas>
+  </div>
+</div>
 
-    <section id="admin-panel" class="container page" style="display:none;">
-        <div id="admin-login-box" class="login-card">
-            <h2>Admin Login</h2>
-            <input type="password" id="adminPass" placeholder="Enter Password">
-            <button onclick="checkAdminPass()" class="btn-book">Login</button>
-        </div>
+<div id="data"></div>
 
-        <div id="admin-content" style="display:none;">
-            <div class="admin-header">
-                <h2>Customer Appointments</h2>
-                <button class="logout-btn" onclick="adminLogout()">Logout</button>
-            </div>
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Customer</th>
-                            <th>Mobile</th>
-                            <th>Service</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-data"></tbody>
-                </table>
-            </div>
-        </div>
-    </section>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, where, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    <script src="script.js"></script>
+// 🔥 YOUR CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyD-Iqgk4mxo-kh3lPEJnZ8M3LZTGs8CWEI",
+  authDomain: "appointment-booking-syst-58963.firebaseapp.com",
+  projectId: "appointment-booking-syst-58963",
+  storageBucket: "appointment-booking-syst-58963.firebasestorage.app",
+  messagingSenderId: "494502187842",
+  appId: "1:494502187842:web:195a5d7a5a4441e1daeedb",
+  measurementId: "G-CK2KR0D0BK"
+};
+
+// INIT
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+let isAdmin = false;
+
+// LOGIN
+window.login = async () => {
+  const provider = new GoogleAuthProvider();
+  await signInWithPopup(auth, provider);
+};
+
+// LOGOUT
+window.logout = async () => {
+  await signOut(auth);
+  location.reload();
+};
+
+// AUTH STATE
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    currentUser = user;
+
+    const userRef = doc(db, "users", user.uid);
+
+    await updateDoc(userRef, {
+      name: user.displayName,
+      email: user.email
+    }).catch(async () => {
+      await addDoc(collection(db, "users"), {
+        uid: user.uid,
+        name: user.displayName,
+        email: user.email,
+        role: "user"
+      });
+    });
+
+    // Check role
+    const snapshot = await getDocs(collection(db, "users"));
+    snapshot.forEach(d => {
+      if (d.data().uid === user.uid && d.data().role === "admin") {
+        isAdmin = true;
+        document.getElementById("adminPanel").style.display = "block";
+      }
+    });
+
+    loadData();
+  }
+});
+
+// BOOK
+window.book = async () => {
+  const date = document.getElementById("date").value;
+  const time = document.getElementById("time").value;
+
+  const q = query(
+    collection(db, "appointments"),
+    where("date","==",date),
+    where("time","==",time)
+  );
+
+  const snap = await getDocs(q);
+
+  if (!snap.empty) {
+    alert("Slot already booked!");
+    return;
+  }
+
+  await addDoc(collection(db, "appointments"), {
+    userId: currentUser.uid,
+    userName: currentUser.displayName,
+    date,
+    time,
+    status: "Pending",
+    paymentStatus: "Pending",
+    createdAt: new Date()
+  });
+};
+
+// LOAD DATA + CHART
+let chart;
+
+function loadData() {
+  const q = query(collection(db, "appointments"), orderBy("createdAt","desc"));
+
+  onSnapshot(q, (snapshot) => {
+
+    let html = "";
+    let stats = {};
+
+    snapshot.forEach(docSnap => {
+      const d = docSnap.data();
+
+      stats[d.date] = (stats[d.date] || 0) + 1;
+
+      html += `
+      <div class="card">
+        ${d.userName}<br>
+        ${d.date} - ${d.time}<br>
+        Status: ${d.status}<br>
+
+        ${isAdmin ? `
+          <button class="admin" onclick="updateStatus('${docSnap.id}','Confirmed')">Confirm</button>
+          <button class="delete" onclick="updateStatus('${docSnap.id}','Cancelled')">Cancel</button>
+        ` : ""}
+      </div>
+      `;
+    });
+
+    document.getElementById("data").innerHTML = html;
+
+    if (isAdmin) drawChart(stats);
+  });
+}
+
+// UPDATE STATUS
+window.updateStatus = async (id, status) => {
+  await updateDoc(doc(db, "appointments", id), { status });
+};
+
+// CHART
+function drawChart(stats) {
+  const ctx = document.getElementById("chart");
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(stats),
+      datasets: [{
+        label: 'Bookings per Day',
+        data: Object.values(stats)
+      }]
+    }
+  });
+}
+</script>
+
 </body>
 </html>
