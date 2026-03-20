@@ -16,7 +16,7 @@
         <div class="logo">ServicePortal</div>
         <nav>
             <button class="nav-btn" onclick="showPage('welcome-page')">Home</button>
-            <button class="nav-btn admin-trigger" onclick="showPage('admin-panel')">Admin Login</button>
+            <button class="nav-btn" onclick="showPage('admin-panel')">Admin Login</button>
         </nav>
     </header>
 
@@ -41,29 +41,29 @@
         </div>
     </div>
 
-    <div id="slip-container" style="display:none;">
-        <div id="booking-slip" style="padding: 30px; border: 2px solid #333; width: 350px; font-family: Arial;">
-            <h2 style="text-align: center; border-bottom: 2px solid #333;">BOOKING SLIP</h2>
-            <p><strong>Booking ID:</strong> <span id="slip-id"></span></p>
-            <p><strong>Customer:</strong> <span id="slip-name"></span></p>
+    <div style="display:none;">
+        <div id="booking-slip" style="padding: 30px; border: 2px solid #333; width: 400px; font-family: Arial;">
+            <h2 style="text-align: center; border-bottom: 2px solid #333;">BOOKING CONFIRMATION</h2>
+            <p><strong>Order ID:</strong> <span id="slip-id"></span></p>
+            <p><strong>Name:</strong> <span id="slip-name"></span></p>
             <p><strong>Mobile:</strong> <span id="slip-mobile"></span></p>
             <p><strong>Address:</strong> <span id="slip-address"></span></p>
             <p><strong>Service:</strong> <span id="slip-item"></span></p>
             <p><strong>Date:</strong> <span id="slip-date"></span></p>
-            <p style="text-align: center; margin-top: 20px; font-size: 12px;">Dhanyawad! Jaldi milte hain.</p>
+            <p style="text-align: center; margin-top: 20px;">Thank you for booking with us!</p>
         </div>
     </div>
 
     <section id="admin-panel" class="container page" style="display:none;">
         <div id="admin-login-box" class="login-card">
-            <h2>Admin Authentication</h2>
+            <h2>Admin Login</h2>
             <input type="password" id="adminPass" placeholder="Enter Password">
             <button onclick="checkAdminPass()" class="btn-book">Login</button>
         </div>
 
         <div id="admin-content" style="display:none;">
             <div class="admin-header">
-                <h2>All Appointments</h2>
+                <h2>Customer Appointments</h2>
                 <button class="logout-btn" onclick="adminLogout()">Logout</button>
             </div>
             <div class="table-responsive">
